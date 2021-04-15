@@ -4,13 +4,17 @@
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.24));
   transition: transform 0.1s ease-in, filter 0.1s ease-in;
   color: #fff;
+  cursor: pointer;
 }
 .button:hover {
   filter: drop-shadow(0 6px 4px rgba(0, 0, 0, 0.24));
 }
 .button:active {
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.24));
-  /* transform: translateY(4px); */
+}
+.button[disabled] {
+  opacity: 0.4;
+  pointer-events: none;
 }
 .button-xs {
   font-size: 10px;
@@ -46,4 +50,36 @@
 
 .danger {
   background-color: #ef476f;
+}
+
+.inverted.button {
+  background-color: transparent;
+  border-width: 1px;
+  border-style: solid;
+  filter: none;
+}
+
+.inverted.primary {
+  border-color: #118ab2;
+  color: #118ab2;
+}
+
+.inverted.secondary {
+  border-color: rgb(153, 153, 153);
+  color: rgb(153, 153, 153);
+}
+
+.inverted.success {
+  border-color: #06d6a0;
+  color: #06d6a0;
+}
+
+.inverted.warning {
+  border-color: #ffd166;
+  color: #ffd166;
+}
+
+.inverted.danger {
+  border-color: #ef476f;
+  color: #ef476f;
 }

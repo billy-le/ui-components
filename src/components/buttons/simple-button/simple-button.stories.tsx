@@ -5,15 +5,18 @@ import { Story } from '@storybook/react';
 export default {
   title: 'Buttons/SimpleButton',
   component: SimpleButton,
+  args: {
+    label: 'Save',
+    inverted: false,
+    disabled: false,
+  },
+  argTypes: {
+    label: { control: { type: 'text' } },
+    size: { options: ['xs', 'sm', 'md', 'lg'] },
+    type: { options: ['primary', 'secondary', 'success', 'warning', 'danger'] },
+  },
 };
 
 const Template: Story<SimpleButtonProps> = (args) => <SimpleButton {...args} />;
 export const Default = Template.bind({});
-
-Default.args = {
-  label: 'Hello',
-  size: 'lg',
-  type: 'danger',
-};
-
 Default.storyName = 'SimpleButton';
