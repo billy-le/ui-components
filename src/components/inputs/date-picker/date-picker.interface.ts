@@ -1,8 +1,6 @@
 export interface DatePickerProps {
-  blockPast?: boolean;
-  blockFuture?: boolean;
+  date?: Date;
+  disablePast?: boolean;
+  disableFuture?: boolean;
   yearRange?: number;
-  year?: number;
-  month?: number;
-  day?: number;
 }
