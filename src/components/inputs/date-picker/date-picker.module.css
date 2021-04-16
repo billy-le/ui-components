@@ -1,0 +1,60 @@
+.calendar {
+  --border-gray: rgba(208, 210, 215, 1);
+}
+
+.calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-bottom: 1px solid var(--border-gray);
+}
+
+.calendar .day {
+  border-left: 1px solid var(--border-gray);
+}
+
+.day:nth-of-type(7n) {
+  border-right: 1px solid var(--border-gray);
+}
+
+.day {
+  border-top: 1px solid var(--border-gray);
+}
+
+.dayOfWeek {
+  text-align: center;
+}
+
+.day {
+  position: relative;
+  height: 100px;
+  width: 100%;
+}
+
+.day:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.dayNumber {
+  height: 24px;
+  width: 24px;
+  position: absolute;
+  display: grid;
+  place-items: center;
+  right: 2px;
+}
+
+.row {
+  display: flex;
+  margin-bottom: 1rem;
+}
+
+.row *:not(:last-child) {
+  margin-right: 2rem;
+}
+
+.dateInput {
+}
+
+.dateInput::-webkit-calendar-picker-indicator {
+  display: none;
+}
