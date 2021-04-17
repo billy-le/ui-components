@@ -22,12 +22,47 @@ export function DatePicker({
   const [date, setDate] = useState(dateProp ?? new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const datePickerRef = useRef<HTMLDivElement>(null);
+  const calendarButtonRef = useRef<HTMLButtonElement>(null);
   const monthRef = useRef<HTMLInputElement>(null);
   const dayRef = useRef<HTMLInputElement>(null);
   const yearRef = useRef<HTMLInputElement>(null);
   const _yearRange = yearRange || YEAR_RANGE_DEFAULT;
   const minYear = new Date().getFullYear() - _yearRange;
   const maxYear = new Date().getFullYear() + _yearRange;
+  const keyDownMap = useRef({
+    year: {
+      ArrowRight() {
+        calendarButtonRef.current?.focus();
+      },
+      ArrowLeft() {
+        dayRef.current?.focus();
+      },
+    },
+    month: {
+      ArrowRight() {
+        dayRef.current?.focus();
+      },
+      ArrowLeft() {
+        // do nothing
+      },
+    },
+    day: {
+      ArrowRight() {
+        yearRef.current?.focus();
+      },
+      ArrowLeft() {
+        monthRef.current?.focus();
+      },
+    },
+    button: {
+      ArrowRight() {
+        // do nothing
+      },
+      ArrowLeft() {
+        yearRef.current?.focus();
+      },
+    },
+  });
 
   useEffect(() => {
     if (yearRef.current) yearRef.current.value = date.getFullYear().toString();
@@ -133,6 +168,15 @@ export function DatePicker({
   const debouncedMonthChange = debounce(handleMonthChange, 250);
   const debouncedDayChange = debounce(handleDayChange, 250);
 
+  function handleKeyDown(input: 'year' | 'month' | 'day' | 'button') {
+    return function (e: React.KeyboardEvent<HTMLInputElement | HTMLButtonElement>) {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        const { key } = e;
+        keyDownMap.current[input][key]();
+      }
+    };
+  }
+
   return (
     <div ref={datePickerRef} className={css.container}>
       <div className={[css.datePicker, className].join(' ')} style={style}>
@@ -141,21 +185,25 @@ export function DatePicker({
             ref={monthRef}
             type='number'
             step='1'
-            min='01'
+            min='1'
             max='12'
             className={[css.dateInput, css.mm].join(' ')}
             placeholder='MM'
+            inputMode='numeric'
             onChange={debouncedMonthChange}
+            onKeyDown={handleKeyDown('month')}
           />
           <input
             ref={dayRef}
             type='number'
             step='1'
-            min='01'
+            min='1'
             max={getDaysInMonth(date)}
             className={[css.dateInput, css.dd].join(' ')}
             placeholder='DD'
+            inputMode='numeric'
             onChange={debouncedDayChange}
+            onKeyDown={handleKeyDown('day')}
           />
           <input
             ref={yearRef}
@@ -165,10 +213,17 @@ export function DatePicker({
             max={maxYear}
             className={[css.dateInput, css.yyyy].join(' ')}
             placeholder='YYYY'
+            inputMode='numeric'
             onChange={debouncedYearChange}
+            onKeyDown={handleKeyDown('year')}
           />
         </div>
-        <button className={css.icon} onClick={handleCalendarToggle}>
+        <button
+          ref={calendarButtonRef}
+          className={css.icon}
+          onClick={handleCalendarToggle}
+          onKeyDown={handleKeyDown('button')}
+        >
           <CalendarIcon />
         </button>
       </div>
