@@ -3,4 +3,6 @@ export interface DatePickerProps {
   disablePast?: boolean;
   disableFuture?: boolean;
   yearRange?: number;
+  className?: string;
+  style?: React.CSSProperties;
 }

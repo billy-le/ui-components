@@ -1,7 +1,9 @@
 .calendarContainer {
   --border-gray: rgba(208, 210, 215, 1);
+}
 
-  font-family: monospace;
+.calendarContainer * {
+  font-family: inherit;
 }
 
 .calendar {
@@ -28,7 +30,6 @@
 
 .day {
   position: relative;
-  height: 100px;
   width: 100%;
 }
 
@@ -47,9 +48,33 @@
 
 .row {
   display: flex;
-  margin-bottom: 1rem;
+  width: 100%;
 }
 
-.row *:not(:last-child) {
-  margin-right: 2rem;
+.controls {
+  display: flex;
+  justify-content: space-between;
+}
+
+.controls .row:last-child {
+  margin-left: 2rem;
+  justify-content: flex-end;
+}
+
+.controls button {
+  background: black;
+  border: none;
+  color: #fff;
+  padding: 8px 16px;
+  text-transform: uppercase;
+  outline: none;
+}
+
+.controls button:focus {
+  box-shadow: inset 0 0 0 2px orange;
+}
+
+.controls select {
+  font-size: 18px;
+  width: fit-content;
 }

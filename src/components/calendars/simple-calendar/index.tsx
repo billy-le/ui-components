@@ -9,7 +9,11 @@ export function SimpleCalendar({
   yearRange: yearRangeProp,
   disablePast,
   disableFuture,
+  weekDayFormat,
   onChange,
+  dayHeight = 100,
+  className = '',
+  style,
 }: SimpleCalendarProps) {
   const years = useMemo(() => {
     let years = yearRange(yearRangeProp || 20, {
@@ -20,26 +24,26 @@ export function SimpleCalendar({
   }, [yearRangeProp, disablePast, disableFuture]);
 
   const days = useMemo(() => {
-    const month = dateProp.getMonth() + 1;
+    const month = dateProp.getMonth();
     const year = dateProp.getFullYear();
     const day = dateProp.getDate();
-    const zeroBasedMonth = month - 1;
-    let date = dateFns.startOfWeek(new Date(year, zeroBasedMonth));
+    let date = dateFns.startOfWeek(dateFns.startOfMonth(dateProp));
     let days = [];
     for (let i = 0; i < CALENDAR_WEEKS; i++) {
       let inner = [];
       for (let j = 0; j < 7; j++) {
         const dateMonth = dateFns.getMonth(date);
-        const currentMonth = dateFns.getMonth(new Date(year, zeroBasedMonth));
+        const currentMonth = dateFns.getMonth(new Date(year, month));
         const dateDay = dateFns.getDate(date);
-        const currentDay = dateFns.getDate(new Date(year, zeroBasedMonth, day));
+        const currentDay = dateFns.getDate(new Date(year, month, day));
         const calendarDay = {
+          calendarDate: date,
           calendarDay: dateFns.getDate(date),
           isPrevMonth: dateMonth < currentMonth,
           isNextMonth: dateMonth > currentMonth,
           isPrevDay: dateDay < currentDay,
           isNextDay: dateDay > currentDay,
-          isSameMonth: dateFns.isSameMonth(date, new Date(year, zeroBasedMonth)),
+          isSameMonth: dateFns.isSameMonth(date, new Date(year, month)),
         };
         inner.push(calendarDay);
         date = dateFns.addDays(date, 1);
@@ -117,56 +121,77 @@ export function SimpleCalendar({
   }
 
   return (
-    <div className={css.calendarContainer}>
-      <div className={css.row}>
-        <button onClick={handlePrevYear}>prev</button>
-        <select onChange={handleYearChange} value={dateProp.getFullYear()}>
-          {years.map((year) => (
-            <option key={year} value={year}>
-              {year}
-            </option>
-          ))}
-        </select>
-        <button onClick={handleNextYear}>next</button>
-      </div>
-      <div className={css.row}>
-        <button onClick={handlePrevMonth}>prev</button>
-        <select onChange={handleMonthChange} value={dateProp.getMonth() + 1}>
-          {months.map(({ month, longName }) => (
-            <option key={month} value={month}>
-              {longName}
-            </option>
-          ))}
-        </select>
-        <button onClick={handleNextMonth}>next</button>
+    <div className={[css.calendarContainer, className].join(' ')} style={style}>
+      <div className={css.controls}>
+        <div className={css.row}>
+          <button onClick={handlePrevMonth} aria-label='previous month'>
+            prev
+          </button>
+          <select onChange={handleMonthChange} value={dateProp.getMonth() + 1}>
+            {months.map(({ month, longName }) => (
+              <option key={month} value={month}>
+                {longName}
+              </option>
+            ))}
+          </select>
+          <button onClick={handleNextMonth} aria-label='next month'>
+            next
+          </button>
+        </div>
+        <div className={css.row}>
+          <button onClick={handlePrevYear} aria-label='previous year'>
+            prev
+          </button>
+          <select onChange={handleYearChange} value={dateProp.getFullYear()}>
+            {years.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+          <button onClick={handleNextYear} aria-label='next year'>
+            next
+          </button>
+        </div>
       </div>
       <div className={css.calendar}>
         {weekDays.map(([long, short]) => {
           return (
             <h3 key={short} className={css.dayOfWeek}>
-              {long}
+              {!weekDayFormat || weekDayFormat === 'long' ? long : short}
             </h3>
           );
         })}
 
-        {days.map(({ calendarDay, isPrevMonth, isNextMonth, isSameMonth }, index) => {
+        {days.map(({ calendarDate, calendarDay, isPrevMonth, isNextMonth, isSameMonth }, index) => {
+          let selectedDate =
+            calendarDay !== dateProp.getDate()
+              ? false
+              : dateFns.isSameDay(
+                  new Date(calendarDate.getFullYear(), calendarDate.getMonth(), calendarDate.getDate()),
+                  new Date(dateProp.getFullYear(), dateProp.getMonth(), calendarDay)
+                );
+
           return (
             <div
+              tabIndex={0}
               className={css.day}
               key={index}
               style={{
-                backgroundColor:
-                  calendarDay === dateProp.getDate() && isSameMonth
-                    ? '#E9EAEC'
-                    : isSameMonth
-                    ? undefined
-                    : isPrevMonth
-                    ? `#9FA3AC`
-                    : isNextMonth
-                    ? '#9FA3AC'
-                    : undefined,
+                backgroundColor: selectedDate
+                  ? '#E9EAEC'
+                  : isSameMonth
+                  ? undefined
+                  : isPrevMonth
+                  ? `#9FA3AC`
+                  : isNextMonth
+                  ? '#9FA3AC'
+                  : undefined,
+                height: dayHeight,
               }}
               onClick={handleDayClick(calendarDay)}
+              role='gridcell'
+              aria-selected={selectedDate}
             >
               <div className={css.dayNumber}>{calendarDay}</div>
             </div>
