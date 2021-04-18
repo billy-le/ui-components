@@ -2,7 +2,7 @@ import * as dateFns from 'date-fns';
 
 const CALENDAR_WEEKS = 6;
 
-function yearRange(
+function getYearRange(
   range: number,
   options: {
     includePast?: boolean;
@@ -58,4 +58,4 @@ const weekDays = (function () {
   return Object.entries(Object.fromEntries(weekDays));
 })();
 
-export { CALENDAR_WEEKS, yearRange, months, weekDays };
+export { CALENDAR_WEEKS, getYearRange, months, weekDays };

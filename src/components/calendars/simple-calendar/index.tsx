@@ -1,12 +1,12 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, MouseEvent, ChangeEvent, KeyboardEvent } from 'react';
 import * as dateFns from 'date-fns';
 import { SimpleCalendarProps } from './simple-calendar.interface';
-import { yearRange, months, weekDays, CALENDAR_WEEKS } from './simple-calendar.utils';
+import { getYearRange, months, weekDays, CALENDAR_WEEKS } from './simple-calendar.utils';
 import css from './simple-calendar.module.css';
 
 export function SimpleCalendar({
   date: dateProp = new Date(),
-  yearRange: yearRangeProp,
+  yearRange,
   disablePast,
   disableFuture,
   weekDayFormat,
@@ -15,15 +15,63 @@ export function SimpleCalendar({
   className = '',
   style,
 }: SimpleCalendarProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const keyDownActions = useRef({
+    ArrowRight(element: HTMLDivElement) {
+      const nextElementSibling = element.nextElementSibling as HTMLDivElement;
+      const nextRowElement = element.parentElement?.nextElementSibling?.firstElementChild as HTMLDivElement;
+      if (nextElementSibling) {
+        nextElementSibling.focus();
+      } else if (nextRowElement) {
+        nextRowElement.focus();
+      }
+    },
+    ArrowLeft(element: HTMLDivElement) {
+      const previousElementSibling = element.previousElementSibling as HTMLDivElement;
+      const previousRowLastElement = element.parentElement?.previousElementSibling?.lastElementChild as HTMLDivElement;
+      if (previousElementSibling) {
+        previousElementSibling.focus();
+      } else if (previousRowLastElement) {
+        previousRowLastElement.focus();
+      }
+    },
+    ArrowUp(element: HTMLDivElement) {
+      const parentElement = element.parentElement as HTMLDivElement;
+      if (parentElement) {
+        const index = Array.from(parentElement.children).indexOf(element);
+        (parentElement.previousElementSibling?.children?.[index] as HTMLDivElement)?.focus();
+      }
+    },
+    ArrowDown(element: HTMLDivElement) {
+      const parentElement = element.parentElement as HTMLDivElement;
+      if (parentElement) {
+        const index = Array.from(parentElement.children).indexOf(element);
+        (parentElement.nextElementSibling?.children?.[index] as HTMLDivElement)?.focus();
+      }
+    },
+    Space(element: HTMLDivElement) {
+      element.click();
+      setDayFocus();
+    },
+    Enter(element: HTMLDivElement) {
+      element.click();
+      setDayFocus();
+    },
+  });
+
+  useEffect(() => {
+    setDayFocus();
+  }, []);
+
   const years = useMemo(() => {
-    let years = yearRange(yearRangeProp || 20, {
+    let years = getYearRange(yearRange || 20, {
       includePast: !disablePast,
       includeFuture: !disableFuture,
     });
     return years;
-  }, [yearRangeProp, disablePast, disableFuture]);
+  }, [yearRange, disablePast, disableFuture]);
 
-  const days = useMemo(() => {
+  const calendar = useMemo(() => {
     const month = dateProp.getMonth();
     const year = dateProp.getFullYear();
     const day = dateProp.getDate();
@@ -53,7 +101,7 @@ export function SimpleCalendar({
       }
       days.push(inner);
     }
-    return days.flat();
+    return days;
   }, [dateProp]);
 
   function handlePrevMonth() {
@@ -105,23 +153,52 @@ export function SimpleCalendar({
     onChange(new Date(_year, month, day));
   }
 
-  function handleYearChange(e: React.ChangeEvent<HTMLSelectElement>) {
+  function handleYearChange(e: ChangeEvent<HTMLSelectElement>) {
     const month = dateProp.getMonth();
     const day = dateProp.getDate();
     const { value } = e.target;
     onChange(new Date(parseInt(value, 10), month, day));
   }
 
-  function handleDayClick(day: number) {
-    return function (e: React.MouseEvent) {
-      const month = dateProp.getMonth();
-      const year = dateProp.getFullYear();
+  function handleDayClick(date: Date) {
+    return function (e: MouseEvent) {
+      let year = date.getFullYear();
+      const maxYear = new Date().getFullYear() + (yearRange || 20);
+      const minYear = new Date().getFullYear() - (yearRange || 20);
+      // prevent user from clicking outside of year range
+      if (year > maxYear || year < minYear) {
+        return;
+      }
+      let month = date.getMonth();
+      let day = date.getDate();
       onChange(new Date(year, month, day));
+      setDayFocus();
     };
   }
 
+  function handleKeyDown(e: KeyboardEvent<HTMLDivElement>) {
+    const { code } = e;
+    const target = e.target as HTMLDivElement;
+    if (
+      code === 'ArrowRight' ||
+      code === 'ArrowLeft' ||
+      code === 'ArrowUp' ||
+      code === 'ArrowDown' ||
+      code === 'Space' ||
+      code === 'Enter'
+    ) {
+      keyDownActions.current[code](target);
+    }
+  }
+
+  function setDayFocus() {
+    setTimeout(() => {
+      (document.querySelector('[aria-selected="true"]') as HTMLDivElement)?.focus();
+    }, 0);
+  }
+
   return (
-    <div className={[css.calendarContainer, className].join(' ')} style={style}>
+    <div ref={containerRef} className={[css.calendarContainer, className].join(' ')} style={style}>
       <div className={css.controls}>
         <div className={css.row}>
           <button onClick={handlePrevMonth} aria-label='previous month'>
@@ -154,49 +231,54 @@ export function SimpleCalendar({
           </button>
         </div>
       </div>
-      <div className={css.calendar}>
-        {weekDays.map(([long, short]) => {
-          return (
-            <h3 key={short} className={css.dayOfWeek}>
-              {!weekDayFormat || weekDayFormat === 'long' ? long : short}
-            </h3>
-          );
-        })}
+      <div role='grid' className={css.calendar}>
+        <div role='row' className={css.subgrid}>
+          {weekDays.map(([long, short]) => {
+            return (
+              <h3 role='gridcell' key={short} className={css.dayOfWeek}>
+                {!weekDayFormat || weekDayFormat === 'long' ? long : short}
+              </h3>
+            );
+          })}
+        </div>
 
-        {days.map(({ calendarDate, calendarDay, isPrevMonth, isNextMonth, isSameMonth }, index) => {
-          let selectedDate =
-            calendarDay !== dateProp.getDate()
-              ? false
-              : dateFns.isSameDay(
-                  new Date(calendarDate.getFullYear(), calendarDate.getMonth(), calendarDate.getDate()),
-                  new Date(dateProp.getFullYear(), dateProp.getMonth(), calendarDay)
-                );
+        {calendar.map((week, weekIndex) => (
+          <div key={weekIndex} role='row' className={css.subgrid}>
+            {week.map(({ calendarDate, calendarDay, isPrevMonth, isNextMonth, isSameMonth }) => {
+              let selectedDate =
+                calendarDay !== dateProp.getDate()
+                  ? false
+                  : dateFns.isSameDay(
+                      new Date(calendarDate.getFullYear(), calendarDate.getMonth(), calendarDate.getDate()),
+                      new Date(dateProp.getFullYear(), dateProp.getMonth(), calendarDay)
+                    );
 
-          return (
-            <div
-              tabIndex={0}
-              className={css.day}
-              key={index}
-              style={{
-                backgroundColor: selectedDate
-                  ? '#E9EAEC'
-                  : isSameMonth
-                  ? undefined
-                  : isPrevMonth
-                  ? `#9FA3AC`
-                  : isNextMonth
-                  ? '#9FA3AC'
-                  : undefined,
-                height: dayHeight,
-              }}
-              onClick={handleDayClick(calendarDay)}
-              role='gridcell'
-              aria-selected={selectedDate}
-            >
-              <div className={css.dayNumber}>{calendarDay}</div>
-            </div>
-          );
-        })}
+              return (
+                <div
+                  key={calendarDate.getTime()}
+                  tabIndex={selectedDate ? 0 : -1}
+                  role='gridcell'
+                  aria-selected={selectedDate}
+                  className={css.day}
+                  style={{
+                    backgroundColor: isSameMonth
+                      ? undefined
+                      : isPrevMonth
+                      ? `#9FA3AC`
+                      : isNextMonth
+                      ? '#9FA3AC'
+                      : undefined,
+                    height: dayHeight,
+                  }}
+                  onClick={handleDayClick(calendarDate)}
+                  onKeyDown={handleKeyDown}
+                >
+                  <div className={css.dayNumber}>{calendarDay}</div>
+                </div>
+              );
+            })}
+          </div>
+        ))}
       </div>
     </div>
   );

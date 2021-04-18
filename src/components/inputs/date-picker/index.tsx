@@ -9,6 +9,7 @@ import { zeroPad } from './date-picker.utils';
 import css from './date-picker.module.css';
 
 const YEAR_RANGE_DEFAULT = 2;
+const DEBOUNCE_DELAY = 500;
 const monthsMax = [1, 3, 5, 8, 10];
 
 export function DatePicker({
@@ -159,87 +160,93 @@ export function DatePicker({
       } else {
         newDate.setDate(parsed);
       }
-      const day = newDate.getDate();
       setDate(newDate);
     }
   };
 
-  const debouncedYearChange = debounce(handleYearChange, 250);
-  const debouncedMonthChange = debounce(handleMonthChange, 250);
-  const debouncedDayChange = debounce(handleDayChange, 250);
+  const debouncedYearChange = debounce(handleYearChange, DEBOUNCE_DELAY);
+  const debouncedMonthChange = debounce(handleMonthChange, DEBOUNCE_DELAY);
+  const debouncedDayChange = debounce(handleDayChange, DEBOUNCE_DELAY);
 
   function handleKeyDown(input: 'year' | 'month' | 'day' | 'button') {
     return function (e: React.KeyboardEvent<HTMLInputElement | HTMLButtonElement>) {
-      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-        const { key } = e;
-        keyDownMap.current[input][key]();
+      const { code } = e;
+      if (code === 'ArrowRight' || code === 'ArrowLeft') {
+        keyDownMap.current[input][code]();
       }
     };
   }
 
   return (
-    <div ref={datePickerRef} className={css.container}>
-      <div className={[css.datePicker, className].join(' ')} style={style}>
-        <div className={css.dateInputs}>
-          <input
-            ref={monthRef}
-            type='number'
-            step='1'
-            min='1'
-            max='12'
-            className={[css.dateInput, css.mm].join(' ')}
-            placeholder='MM'
-            inputMode='numeric'
-            onChange={debouncedMonthChange}
-            onKeyDown={handleKeyDown('month')}
-          />
-          <input
-            ref={dayRef}
-            type='number'
-            step='1'
-            min='1'
-            max={getDaysInMonth(date)}
-            className={[css.dateInput, css.dd].join(' ')}
-            placeholder='DD'
-            inputMode='numeric'
-            onChange={debouncedDayChange}
-            onKeyDown={handleKeyDown('day')}
-          />
-          <input
-            ref={yearRef}
-            type='number'
-            step='1'
-            min={minYear}
-            max={maxYear}
-            className={[css.dateInput, css.yyyy].join(' ')}
-            placeholder='YYYY'
-            inputMode='numeric'
-            onChange={debouncedYearChange}
-            onKeyDown={handleKeyDown('year')}
-          />
+    <>
+      <div ref={datePickerRef} className={css.container}>
+        <div className={[css.datePicker, className].join(' ')} style={style}>
+          <div className={css.dateInputs}>
+            <label htmlFor='month' className={css.srOnly} aria-label='month' />
+            <input
+              ref={monthRef}
+              id='month'
+              type='number'
+              step='1'
+              min='1'
+              max='12'
+              className={[css.dateInput, css.mm].join(' ')}
+              placeholder='MM'
+              inputMode='numeric'
+              onChange={debouncedMonthChange}
+              onKeyDown={handleKeyDown('month')}
+            />
+            <label htmlFor='day' className={css.srOnly} aria-label='day' />
+            <input
+              ref={dayRef}
+              id='day'
+              type='number'
+              step='1'
+              min='1'
+              max={getDaysInMonth(date)}
+              className={[css.dateInput, css.dd].join(' ')}
+              placeholder='DD'
+              inputMode='numeric'
+              onChange={debouncedDayChange}
+              onKeyDown={handleKeyDown('day')}
+            />
+            <label htmlFor='year' className={css.srOnly} aria-label='year' />
+            <input
+              ref={yearRef}
+              id='year'
+              type='number'
+              step='1'
+              min={minYear}
+              max={maxYear}
+              className={[css.dateInput, css.yyyy].join(' ')}
+              placeholder='YYYY'
+              inputMode='numeric'
+              onChange={debouncedYearChange}
+              onKeyDown={handleKeyDown('year')}
+            />
+          </div>
+          <button
+            ref={calendarButtonRef}
+            className={css.icon}
+            onClick={handleCalendarToggle}
+            onKeyDown={handleKeyDown('button')}
+          >
+            <CalendarIcon />
+          </button>
         </div>
-        <button
-          ref={calendarButtonRef}
-          className={css.icon}
-          onClick={handleCalendarToggle}
-          onKeyDown={handleKeyDown('button')}
-        >
-          <CalendarIcon />
-        </button>
+        {isCalendarOpen && (
+          <SimpleCalendar
+            date={date}
+            yearRange={_yearRange}
+            disablePast={disablePast}
+            disableFuture={disableFuture}
+            weekDayFormat='short'
+            onChange={handleCalendarChange}
+            className={css.calendar}
+            dayHeight={50}
+          />
+        )}
       </div>
-
-      {isCalendarOpen && (
-        <SimpleCalendar
-          date={date}
-          yearRange={_yearRange}
-          disablePast={disablePast}
-          disableFuture={disableFuture}
-          weekDayFormat='short'
-          onChange={handleCalendarChange}
-          className={css.calendar}
-          dayHeight={50}
-        />
-      )}
-    </div>
+    </>
   );
 }

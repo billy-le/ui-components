@@ -16,25 +16,33 @@
   border-left: 1px solid var(--border-gray);
 }
 
-.day:nth-of-type(7n) {
-  border-right: 1px solid var(--border-gray);
-}
-
-.day {
-  border-top: 1px solid var(--border-gray);
-}
-
 .dayOfWeek {
   text-align: center;
 }
 
 .day {
+  border-top: 1px solid var(--border-gray);
   position: relative;
   width: 100%;
 }
 
 .day:hover {
   background-color: rgba(0, 0, 0, 0.05);
+}
+
+.day:focus {
+  outline: black;
+  outline-style: solid;
+  outline-width: 2px;
+  z-index: 1;
+}
+
+.day[aria-selected='true'] {
+  background-color: orange;
+}
+
+.day:nth-of-type(7n) {
+  border-right: 1px solid var(--border-gray);
 }
 
 .dayNumber {
@@ -77,4 +85,11 @@
 .controls select {
   font-size: 18px;
   width: fit-content;
+}
+
+.subgrid {
+  grid-column: span 7;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: subgrid;
 }
